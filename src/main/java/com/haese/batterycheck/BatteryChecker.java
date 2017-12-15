@@ -21,6 +21,8 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 public class BatteryChecker {
@@ -50,13 +52,21 @@ public class BatteryChecker {
             CloseableHttpClient httpclient = this.getClient();
             //CloseableHttpClient httpclient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet("https://haese.freeddns.org:8443/json.htm?type=devices&order=name");
-            httpGet.addHeader("Authorization", "Basic xxxx");
+            httpGet.addHeader("Authorization", "Basic xxx");
             CloseableHttpResponse response = httpclient.execute(httpGet);
             HttpEntity entity = response.getEntity();
-
+            String json_string = EntityUtils.toString(response.getEntity());
+            JSONObject jsonResponse = new JSONObject(json_string);
+            JSONArray devices = jsonResponse.getJSONArray("result");
             // Read the contents of an entity and return it as a String.
-            String content = EntityUtils.toString(entity);
-            System.out.println(content);
+            for (int i = 0; i < devices.length(); ++i) {
+                JSONObject device = devices.getJSONObject(i);
+                int level = device.getInt("BatteryLevel");
+                int used = device.getInt("Used");
+                if ((level < 100) && (used == 1)) {
+                    System.out.println(device.getString("Name") + " heeft niveau " + level);
+                }
+            }
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
